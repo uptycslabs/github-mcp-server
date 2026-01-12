@@ -196,6 +196,7 @@ func AllTools(t translations.TranslationHelperFunc) []inventory.ServerTool {
 
 		// Organization tools
 		SearchOrgs(t),
+		GetOrgAuditLog(t),
 
 		// Pull request tools
 		PullRequestRead(t),
