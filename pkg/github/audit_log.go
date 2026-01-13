@@ -27,7 +27,7 @@ func GetOrgAuditLog(t translations.TranslationHelperFunc) inventory.ServerTool {
 				Title:        t("TOOL_GET_ORG_AUDIT_LOG_USER_TITLE", "Get Organization Audit Log"),
 				ReadOnlyHint: true,
 			},
-			InputSchema: WithPagination(&jsonschema.Schema{
+			InputSchema: WithCursorPagination(&jsonschema.Schema{
 				Type: "object",
 				Properties: map[string]*jsonschema.Schema{
 					"org": {
@@ -113,7 +113,12 @@ func GetOrgAuditLog(t translations.TranslationHelperFunc) inventory.ServerTool {
 				return ghErrors.NewGitHubAPIStatusErrorResponse(ctx, "failed to get organization audit log", resp, body), nil, nil
 			}
 
-			r, err := json.Marshal(auditEntries)
+			response := map[string]any{
+				"audit_entries": auditEntries,
+				"page_info":     buildPageInfo(resp),
+			}
+
+			r, err := json.Marshal(response)
 			if err != nil {
 				return nil, nil, fmt.Errorf("failed to marshal response: %w", err)
 			}
