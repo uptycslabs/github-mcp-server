@@ -102,7 +102,6 @@ func GetOrgAuditLog(t translations.TranslationHelperFunc) inventory.ServerTool {
 				return ghErrors.NewGitHubAPIStatusErrorResponse(ctx, "failed to get organization audit log", resp, body), nil, nil
 			}
 
-			// TODO: look at other list functions and convert to minimal branch if necessary
 			r, err := json.Marshal(auditEntries)
 			if err != nil {
 				return nil, nil, fmt.Errorf("failed to marshal response: %w", err)
