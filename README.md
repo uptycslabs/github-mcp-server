@@ -914,6 +914,15 @@ The following sets of tools are available:
 
 <summary><picture><source media="(prefers-color-scheme: dark)" srcset="pkg/octicons/icons/organization-dark.png"><source media="(prefers-color-scheme: light)" srcset="pkg/octicons/icons/organization-light.png"><img src="pkg/octicons/icons/organization-light.png" width="20" height="20" alt="organization"></picture> Organizations</summary>
 
+- **get_org_audit_log** - Get Organization Audit Log
+  - **Required OAuth Scopes**: `admin:org`
+  - `after`: Cursor for pagination. Use the endCursor from the previous page's PageInfo for GraphQL APIs. (string, optional)
+  - `include`: Events to include. Default value is 'all'. (string, optional)
+  - `order`: The order of audit log events. Default value is 'desc'. (string, optional)
+  - `org`: The organization name. The name is not case sensitive. (string, required)
+  - `perPage`: Results per page for pagination (min 1, max 100) (number, optional)
+  - `phrase`: A search phrase. Examples: 'created:>2025-01-01', 'action:repo.create', 'country:US', 'repo:my-repo', 'operation:access', 'actor:octocat'. Search phrase cannot be text only, it must be used with filters. (string, optional)
+
 - **search_orgs** - Search organizations
   - **Required OAuth Scopes**: `read:org`
   - **Accepted OAuth Scopes**: `admin:org`, `read:org`, `write:org`
