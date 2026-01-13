@@ -43,6 +43,11 @@ func GetOrgAuditLog(t translations.TranslationHelperFunc) inventory.ServerTool {
 						Description: "Events to include. Default value is 'all'.",
 						Enum:        []any{"web", "git", "all"},
 					},
+					"order": {
+						Type:        "string",
+						Description: "The order of audit log events. Default value is 'desc'.",
+						Enum:        []any{"asc", "desc"},
+					},
 				},
 				Required: []string{"org"},
 			}),
@@ -64,6 +69,11 @@ func GetOrgAuditLog(t translations.TranslationHelperFunc) inventory.ServerTool {
 				return utils.NewToolResultError(err.Error()), nil, nil
 			}
 
+			order, err := OptionalParam[string](args, "order")
+			if err != nil {
+				return utils.NewToolResultError(err.Error()), nil, nil
+			}
+
 			pagination, err := OptionalCursorPaginationParams(args)
 			if err != nil {
 				return utils.NewToolResultError(err.Error()), nil, nil
@@ -72,6 +82,7 @@ func GetOrgAuditLog(t translations.TranslationHelperFunc) inventory.ServerTool {
 			opts := &github.GetAuditLogOptions{
 				Phrase:  &phrase,
 				Include: &include,
+				Order:   &order,
 				ListCursorOptions: github.ListCursorOptions{
 					PerPage: pagination.PerPage,
 					After:   pagination.After,
