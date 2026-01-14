@@ -21,3 +21,6 @@ github-mcp-server
 
 .history
 conformance-report/
+
+# env
+.env
