@@ -1,0 +1,31 @@
+{
+  "annotations": {
+    "readOnlyHint": true,
+    "title": "List organization admins"
+  },
+  "description": "List organization owners (members with admin role). Use this to audit who has full administrative access to the org.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "org": {
+        "type": "string",
+        "description": "The organization name."
+      },
+      "page": {
+        "type": "number",
+        "description": "Page number for pagination (min 1)",
+        "minimum": 1
+      },
+      "perPage": {
+        "type": "number",
+        "description": "Results per page for pagination (min 1, max 100)",
+        "minimum": 1,
+        "maximum": 100
+      }
+    },
+    "required": [
+      "org"
+    ]
+  },
+  "name": "list_org_admins"
+}
