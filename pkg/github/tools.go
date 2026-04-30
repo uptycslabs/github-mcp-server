@@ -214,14 +214,33 @@ func AllTools(t translations.TranslationHelperFunc) []inventory.ServerTool {
 		// Code security tools
 		GetCodeScanningAlert(t),
 		ListCodeScanningAlerts(t),
+		ListOrgCodeScanningAlerts(t),
 
 		// Secret protection tools
 		GetSecretScanningAlert(t),
 		ListSecretScanningAlerts(t),
+		ListSecretScanningAlertLocations(t),
+		ListOrgSecretScanningAlerts(t),
 
 		// Dependabot tools
 		GetDependabotAlert(t),
 		ListDependabotAlerts(t),
+
+		// Repository security posture tools
+		GetRepoSecuritySettings(t),
+		GetBranchProtection(t),
+		ListRepoRulesets(t),
+		GetRepoRuleset(t),
+		GetCodeownersErrors(t),
+
+		// Organization security posture tools
+		GetOrgSecuritySettings(t),
+		ListOrgAdmins(t),
+		ListOutsideCollaborators(t),
+		ListOrgInstallations(t),
+		ListSecurityManagers(t),
+		ListOrgTeams(t),
+		ListOrgCodeSecurityConfigs(t),
 
 		// Notification tools
 		ListNotifications(t),

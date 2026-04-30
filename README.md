@@ -617,6 +617,15 @@ The following sets of tools are available:
   - `state`: Filter code scanning alerts by state. Defaults to open (string, optional)
   - `tool_name`: The name of the tool used for code scanning. (string, optional)
 
+- **list_org_code_scanning_alerts** - List org code scanning alerts
+  - **Required OAuth Scopes**: `security_events`
+  - **Accepted OAuth Scopes**: `repo`, `security_events`
+  - `org`: The organization name. (string, required)
+  - `page`: Page number for pagination (min 1) (number, optional)
+  - `perPage`: Results per page for pagination (min 1, max 100) (number, optional)
+  - `severity`: Filter by severity. (string, optional)
+  - `state`: Alert state. Default "open". (string, optional)
+
 </details>
 
 <details>
@@ -914,6 +923,53 @@ The following sets of tools are available:
 
 <summary><picture><source media="(prefers-color-scheme: dark)" srcset="pkg/octicons/icons/organization-dark.png"><source media="(prefers-color-scheme: light)" srcset="pkg/octicons/icons/organization-light.png"><img src="pkg/octicons/icons/organization-light.png" width="20" height="20" alt="organization"></picture> Organizations</summary>
 
+- **get_org_security_settings** - Get organization security settings
+  - **Required OAuth Scopes**: `read:org`
+  - **Accepted OAuth Scopes**: `admin:org`, `read:org`, `write:org`
+  - `org`: The organization name. (string, required)
+
+- **list_org_admins** - List organization admins
+  - **Required OAuth Scopes**: `read:org`
+  - **Accepted OAuth Scopes**: `admin:org`, `read:org`, `write:org`
+  - `org`: The organization name. (string, required)
+  - `page`: Page number for pagination (min 1) (number, optional)
+  - `perPage`: Results per page for pagination (min 1, max 100) (number, optional)
+
+- **list_org_code_security_configs** - List org code-security configurations
+  - **Required OAuth Scopes**: `read:org`
+  - **Accepted OAuth Scopes**: `admin:org`, `read:org`, `write:org`
+  - `after`: Cursor for pagination. Use the endCursor from the previous page's PageInfo for GraphQL APIs. (string, optional)
+  - `org`: The organization name. (string, required)
+  - `perPage`: Results per page for pagination (min 1, max 100) (number, optional)
+  - `target_type`: Target type. Possible values: "global", "all". Default "all". (string, optional)
+
+- **list_org_installations** - List org App installations
+  - **Required OAuth Scopes**: `read:org`
+  - **Accepted OAuth Scopes**: `admin:org`, `read:org`, `write:org`
+  - `org`: The organization name. (string, required)
+  - `page`: Page number for pagination (min 1) (number, optional)
+  - `perPage`: Results per page for pagination (min 1, max 100) (number, optional)
+
+- **list_org_teams** - List organization teams
+  - **Required OAuth Scopes**: `read:org`
+  - **Accepted OAuth Scopes**: `admin:org`, `read:org`, `write:org`
+  - `org`: The organization name. (string, required)
+  - `page`: Page number for pagination (min 1) (number, optional)
+  - `perPage`: Results per page for pagination (min 1, max 100) (number, optional)
+
+- **list_outside_collaborators** - List outside collaborators
+  - **Required OAuth Scopes**: `read:org`
+  - **Accepted OAuth Scopes**: `admin:org`, `read:org`, `write:org`
+  - `filter`: Filter outside collaborators. Possible values: "2fa_disabled", "all". Default "all". (string, optional)
+  - `org`: The organization name. (string, required)
+  - `page`: Page number for pagination (min 1) (number, optional)
+  - `perPage`: Results per page for pagination (min 1, max 100) (number, optional)
+
+- **list_security_managers** - List security managers
+  - **Required OAuth Scopes**: `read:org`
+  - **Accepted OAuth Scopes**: `admin:org`, `read:org`, `write:org`
+  - `org`: The organization name. (string, required)
+
 - **search_org_audit_logs** - Search Organization Audit Logs
   - **Required OAuth Scopes**: `admin:org`
   - `after`: Cursor for pagination. Use the endCursor from the previous page's PageInfo for GraphQL APIs. (string, optional)
@@ -1177,6 +1233,18 @@ The following sets of tools are available:
   - `owner`: Repository owner (string, required)
   - `repo`: Repository name (string, required)
 
+- **get_branch_protection** - Get branch protection
+  - **Required OAuth Scopes**: `repo`
+  - `branch`: The branch name (e.g. "main"). (string, required)
+  - `owner`: The owner of the repository. (string, required)
+  - `repo`: The name of the repository. (string, required)
+
+- **get_codeowners_errors** - Get CODEOWNERS errors
+  - **Required OAuth Scopes**: `repo`
+  - `owner`: The owner of the repository. (string, required)
+  - `ref`: Optional. A branch, tag, or SHA. Defaults to the default branch. (string, optional)
+  - `repo`: The name of the repository. (string, required)
+
 - **get_commit** - Get commit details
   - **Required OAuth Scopes**: `repo`
   - `include_diff`: Whether to include file diffs and stats in the response. Default is true. (boolean, optional)
@@ -1204,6 +1272,18 @@ The following sets of tools are available:
   - `owner`: Repository owner (string, required)
   - `repo`: Repository name (string, required)
   - `tag`: Tag name (e.g., 'v1.0.0') (string, required)
+
+- **get_repo_ruleset** - Get repository ruleset
+  - **Required OAuth Scopes**: `repo`
+  - `includes_parents`: Include parent (org/enterprise) ruleset details. Defaults to true. (boolean, optional)
+  - `owner`: The owner of the repository. (string, required)
+  - `repo`: The name of the repository. (string, required)
+  - `ruleset_id`: The ID of the ruleset (from list_repo_rulesets). (number, required)
+
+- **get_repo_security_settings** - Get repository security settings
+  - **Required OAuth Scopes**: `repo`
+  - `owner`: The owner of the repository. (string, required)
+  - `repo`: The name of the repository. (string, required)
 
 - **get_tag** - Get tag details
   - **Required OAuth Scopes**: `repo`
@@ -1233,6 +1313,14 @@ The following sets of tools are available:
   - `page`: Page number for pagination (min 1) (number, optional)
   - `perPage`: Results per page for pagination (min 1, max 100) (number, optional)
   - `repo`: Repository name (string, required)
+
+- **list_repo_rulesets** - List repository rulesets
+  - **Required OAuth Scopes**: `repo`
+  - `includes_parents`: Include rulesets inherited from the org/enterprise. Defaults to true. (boolean, optional)
+  - `owner`: The owner of the repository. (string, required)
+  - `page`: Page number for pagination (min 1) (number, optional)
+  - `perPage`: Results per page for pagination (min 1, max 100) (number, optional)
+  - `repo`: The name of the repository. (string, required)
 
 - **list_tags** - List tags
   - **Required OAuth Scopes**: `repo`
@@ -1277,6 +1365,25 @@ The following sets of tools are available:
   - **Accepted OAuth Scopes**: `repo`, `security_events`
   - `alertNumber`: The number of the alert. (number, required)
   - `owner`: The owner of the repository. (string, required)
+  - `repo`: The name of the repository. (string, required)
+
+- **list_org_secret_scanning_alerts** - List org secret scanning alerts
+  - **Required OAuth Scopes**: `security_events`
+  - **Accepted OAuth Scopes**: `repo`, `security_events`
+  - `org`: The organization name. (string, required)
+  - `page`: Page number for pagination (min 1) (number, optional)
+  - `perPage`: Results per page for pagination (min 1, max 100) (number, optional)
+  - `resolution`: Comma-separated list of resolutions. Valid: false_positive, wont_fix, revoked, pattern_edited, pattern_deleted, used_in_tests. (string, optional)
+  - `secret_type`: Comma-separated list of secret types to return. (string, optional)
+  - `state`: Alert state. (string, optional)
+
+- **list_secret_scanning_alert_locations** - List secret scanning alert locations
+  - **Required OAuth Scopes**: `security_events`
+  - **Accepted OAuth Scopes**: `repo`, `security_events`
+  - `alertNumber`: The number of the alert (from list_secret_scanning_alerts). (number, required)
+  - `owner`: The owner of the repository. (string, required)
+  - `page`: Page number for pagination (min 1) (number, optional)
+  - `perPage`: Results per page for pagination (min 1, max 100) (number, optional)
   - `repo`: The name of the repository. (string, required)
 
 - **list_secret_scanning_alerts** - List secret scanning alerts
