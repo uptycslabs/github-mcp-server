@@ -65,26 +65,26 @@ func GetOrgSecuritySettings(t translations.TranslationHelperFunc) inventory.Serv
 			}
 
 			out := map[string]any{
-				"login":                                              organization.GetLogin(),
-				"two_factor_requirement_enabled":                     organization.GetTwoFactorRequirementEnabled(),
-				"default_repository_permission":                      organization.GetDefaultRepoPermission(),
-				"members_can_create_repositories":                    organization.GetMembersCanCreateRepos(),
-				"members_can_create_public_repositories":             organization.GetMembersCanCreatePublicRepos(),
-				"members_can_create_private_repositories":            organization.GetMembersCanCreatePrivateRepos(),
-				"members_can_create_internal_repositories":           organization.GetMembersCanCreateInternalRepos(),
-				"members_can_fork_private_repositories":              organization.GetMembersCanForkPrivateRepos(),
-				"members_allowed_repository_creation_type":           organization.GetMembersAllowedRepositoryCreationType(),
-				"members_can_delete_repositories":                    organization.GetMembersCanDeleteRepositories(),
-				"members_can_change_repo_visibility":                 organization.GetMembersCanChangeRepoVisibility(),
-				"members_can_invite_outside_collaborators":           organization.GetMembersCanInviteOutsideCollaborators(),
-				"members_can_create_teams":                           organization.GetMembersCanCreateTeams(),
-				"web_commit_signoff_required":                        organization.GetWebCommitSignoffRequired(),
-				"advanced_security_enabled_for_new_repositories":     organization.GetAdvancedSecurityEnabledForNewRepos(),
-				"dependabot_alerts_enabled_for_new_repositories":     organization.GetDependabotAlertsEnabledForNewRepos(),
-				"dependabot_security_updates_enabled_for_new_repos":  organization.GetDependabotSecurityUpdatesEnabledForNewRepos(),
-				"secret_scanning_enabled_for_new_repositories":       organization.GetSecretScanningEnabledForNewRepos(),
-				"secret_scanning_push_protection_enabled_for_new":    organization.GetSecretScanningPushProtectionEnabledForNewRepos(),
-				"secret_scanning_validity_checks_enabled":            organization.GetSecretScanningValidityChecksEnabled(),
+				"login":                                             organization.GetLogin(),
+				"two_factor_requirement_enabled":                    organization.GetTwoFactorRequirementEnabled(),
+				"default_repository_permission":                     organization.GetDefaultRepoPermission(),
+				"members_can_create_repositories":                   organization.GetMembersCanCreateRepos(),
+				"members_can_create_public_repositories":            organization.GetMembersCanCreatePublicRepos(),
+				"members_can_create_private_repositories":           organization.GetMembersCanCreatePrivateRepos(),
+				"members_can_create_internal_repositories":          organization.GetMembersCanCreateInternalRepos(),
+				"members_can_fork_private_repositories":             organization.GetMembersCanForkPrivateRepos(),
+				"members_allowed_repository_creation_type":          organization.GetMembersAllowedRepositoryCreationType(),
+				"members_can_delete_repositories":                   organization.GetMembersCanDeleteRepositories(),
+				"members_can_change_repo_visibility":                organization.GetMembersCanChangeRepoVisibility(),
+				"members_can_invite_outside_collaborators":          organization.GetMembersCanInviteOutsideCollaborators(),
+				"members_can_create_teams":                          organization.GetMembersCanCreateTeams(),
+				"web_commit_signoff_required":                       organization.GetWebCommitSignoffRequired(),
+				"advanced_security_enabled_for_new_repositories":    organization.GetAdvancedSecurityEnabledForNewRepos(),
+				"dependabot_alerts_enabled_for_new_repositories":    organization.GetDependabotAlertsEnabledForNewRepos(),
+				"dependabot_security_updates_enabled_for_new_repos": organization.GetDependabotSecurityUpdatesEnabledForNewRepos(),
+				"secret_scanning_enabled_for_new_repositories":      organization.GetSecretScanningEnabledForNewRepos(),
+				"secret_scanning_push_protection_enabled_for_new":   organization.GetSecretScanningPushProtectionEnabledForNewRepos(),
+				"secret_scanning_validity_checks_enabled":           organization.GetSecretScanningValidityChecksEnabled(),
 			}
 
 			r, err := json.Marshal(out)
@@ -474,157 +474,6 @@ func ListOrgCodeSecurityConfigs(t translations.TranslationHelperFunc) inventory.
 			r, err := json.Marshal(configs)
 			if err != nil {
 				return utils.NewToolResultErrorFromErr("failed to marshal code-security configurations", err), nil, nil
-			}
-			return utils.NewToolResultText(string(r)), nil, nil
-		},
-	)
-}
-
-// ListOrgCodeScanningAlerts is the org-wide rollup; per-repo `list_code_scanning_alerts`
-// already exists for single-repo investigation.
-func ListOrgCodeScanningAlerts(t translations.TranslationHelperFunc) inventory.ServerTool {
-	return NewTool(
-		ToolsetMetadataCodeSecurity,
-		mcp.Tool{
-			Name:        "list_org_code_scanning_alerts",
-			Description: t("TOOL_LIST_ORG_CODE_SCANNING_ALERTS_DESCRIPTION", "List code scanning alerts across all repositories in an organization."),
-			Annotations: &mcp.ToolAnnotations{
-				Title:        t("TOOL_LIST_ORG_CODE_SCANNING_ALERTS_USER_TITLE", "List org code scanning alerts"),
-				ReadOnlyHint: true,
-			},
-			InputSchema: WithPagination(&jsonschema.Schema{
-				Type: "object",
-				Properties: map[string]*jsonschema.Schema{
-					"org":      {Type: "string", Description: "The organization name."},
-					"state":    {Type: "string", Description: "Alert state. Default \"open\".", Enum: []any{"open", "closed", "dismissed", "fixed"}, Default: json.RawMessage(`"open"`)},
-					"severity": {Type: "string", Description: "Filter by severity.", Enum: []any{"critical", "high", "medium", "low", "warning", "note", "error"}},
-				},
-				Required: []string{"org"},
-			}),
-		},
-		[]scopes.Scope{scopes.SecurityEvents},
-		func(ctx context.Context, deps ToolDependencies, _ *mcp.CallToolRequest, args map[string]any) (*mcp.CallToolResult, any, error) {
-			org, err := RequiredParam[string](args, "org")
-			if err != nil {
-				return utils.NewToolResultError(err.Error()), nil, nil
-			}
-			state, err := OptionalParam[string](args, "state")
-			if err != nil {
-				return utils.NewToolResultError(err.Error()), nil, nil
-			}
-			severity, err := OptionalParam[string](args, "severity")
-			if err != nil {
-				return utils.NewToolResultError(err.Error()), nil, nil
-			}
-			pagination, err := OptionalPaginationParams(args)
-			if err != nil {
-				return utils.NewToolResultError(err.Error()), nil, nil
-			}
-
-			client, err := deps.GetClient(ctx)
-			if err != nil {
-				return utils.NewToolResultErrorFromErr("failed to get GitHub client", err), nil, nil
-			}
-
-			alerts, resp, err := client.CodeScanning.ListAlertsForOrg(ctx, org, &github.AlertListOptions{
-				State:       state,
-				Severity:    severity,
-				ListOptions: github.ListOptions{Page: pagination.Page, PerPage: pagination.PerPage},
-			})
-			if err != nil {
-				return ghErrors.NewGitHubAPIErrorResponse(ctx, "failed to list org code scanning alerts", resp, err), nil, nil
-			}
-			defer func() { _ = resp.Body.Close() }()
-
-			if resp.StatusCode != http.StatusOK {
-				body, err := io.ReadAll(resp.Body)
-				if err != nil {
-					return utils.NewToolResultErrorFromErr("failed to read response body", err), nil, nil
-				}
-				return ghErrors.NewGitHubAPIStatusErrorResponse(ctx, "failed to list org code scanning alerts", resp, body), nil, nil
-			}
-
-			r, err := json.Marshal(alerts)
-			if err != nil {
-				return utils.NewToolResultErrorFromErr("failed to marshal alerts", err), nil, nil
-			}
-			return utils.NewToolResultText(string(r)), nil, nil
-		},
-	)
-}
-
-// ListOrgSecretScanningAlerts is the org-wide rollup of secret scanning alerts.
-func ListOrgSecretScanningAlerts(t translations.TranslationHelperFunc) inventory.ServerTool {
-	return NewTool(
-		ToolsetMetadataSecretProtection,
-		mcp.Tool{
-			Name:        "list_org_secret_scanning_alerts",
-			Description: t("TOOL_LIST_ORG_SECRET_SCANNING_ALERTS_DESCRIPTION", "List secret scanning alerts across all repositories in an organization."),
-			Annotations: &mcp.ToolAnnotations{
-				Title:        t("TOOL_LIST_ORG_SECRET_SCANNING_ALERTS_USER_TITLE", "List org secret scanning alerts"),
-				ReadOnlyHint: true,
-			},
-			InputSchema: WithPagination(&jsonschema.Schema{
-				Type: "object",
-				Properties: map[string]*jsonschema.Schema{
-					"org":         {Type: "string", Description: "The organization name."},
-					"state":       {Type: "string", Description: "Alert state.", Enum: []any{"open", "resolved"}},
-					"secret_type": {Type: "string", Description: "Comma-separated list of secret types to return."},
-					"resolution":  {Type: "string", Description: "Comma-separated list of resolutions. Valid: false_positive, wont_fix, revoked, pattern_edited, pattern_deleted, used_in_tests."},
-				},
-				Required: []string{"org"},
-			}),
-		},
-		[]scopes.Scope{scopes.SecurityEvents},
-		func(ctx context.Context, deps ToolDependencies, _ *mcp.CallToolRequest, args map[string]any) (*mcp.CallToolResult, any, error) {
-			org, err := RequiredParam[string](args, "org")
-			if err != nil {
-				return utils.NewToolResultError(err.Error()), nil, nil
-			}
-			state, err := OptionalParam[string](args, "state")
-			if err != nil {
-				return utils.NewToolResultError(err.Error()), nil, nil
-			}
-			secretType, err := OptionalParam[string](args, "secret_type")
-			if err != nil {
-				return utils.NewToolResultError(err.Error()), nil, nil
-			}
-			resolution, err := OptionalParam[string](args, "resolution")
-			if err != nil {
-				return utils.NewToolResultError(err.Error()), nil, nil
-			}
-			pagination, err := OptionalPaginationParams(args)
-			if err != nil {
-				return utils.NewToolResultError(err.Error()), nil, nil
-			}
-
-			client, err := deps.GetClient(ctx)
-			if err != nil {
-				return utils.NewToolResultErrorFromErr("failed to get GitHub client", err), nil, nil
-			}
-
-			alerts, resp, err := client.SecretScanning.ListAlertsForOrg(ctx, org, &github.SecretScanningAlertListOptions{
-				State:       state,
-				SecretType:  secretType,
-				Resolution:  resolution,
-				ListOptions: github.ListOptions{Page: pagination.Page, PerPage: pagination.PerPage},
-			})
-			if err != nil {
-				return ghErrors.NewGitHubAPIErrorResponse(ctx, "failed to list org secret scanning alerts", resp, err), nil, nil
-			}
-			defer func() { _ = resp.Body.Close() }()
-
-			if resp.StatusCode != http.StatusOK {
-				body, err := io.ReadAll(resp.Body)
-				if err != nil {
-					return utils.NewToolResultErrorFromErr("failed to read response body", err), nil, nil
-				}
-				return ghErrors.NewGitHubAPIStatusErrorResponse(ctx, "failed to list org secret scanning alerts", resp, body), nil, nil
-			}
-
-			r, err := json.Marshal(alerts)
-			if err != nil {
-				return utils.NewToolResultErrorFromErr("failed to marshal alerts", err), nil, nil
 			}
 			return utils.NewToolResultText(string(r)), nil, nil
 		},

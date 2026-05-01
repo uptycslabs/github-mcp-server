@@ -214,13 +214,11 @@ func AllTools(t translations.TranslationHelperFunc) []inventory.ServerTool {
 		// Code security tools
 		GetCodeScanningAlert(t),
 		ListCodeScanningAlerts(t),
-		ListOrgCodeScanningAlerts(t),
 
 		// Secret protection tools
 		GetSecretScanningAlert(t),
 		ListSecretScanningAlerts(t),
 		ListSecretScanningAlertLocations(t),
-		ListOrgSecretScanningAlerts(t),
 
 		// Dependabot tools
 		GetDependabotAlert(t),

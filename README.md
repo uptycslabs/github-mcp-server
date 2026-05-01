@@ -610,21 +610,12 @@ The following sets of tools are available:
 - **list_code_scanning_alerts** - List code scanning alerts
   - **Required OAuth Scopes**: `security_events`
   - **Accepted OAuth Scopes**: `repo`, `security_events`
-  - `owner`: The owner of the repository. (string, required)
-  - `ref`: The Git reference for the results you want to list. (string, optional)
-  - `repo`: The name of the repository. (string, required)
+  - `owner`: The owner of the repository, or the organization name when listing org-wide alerts (no `repo`). (string, required)
+  - `ref`: The Git reference for the results you want to list. Ignored when listing org-wide alerts. (string, optional)
+  - `repo`: Optional. The name of the repository. Omit to list org-wide alerts for `owner`. (string, optional)
   - `severity`: Filter code scanning alerts by severity (string, optional)
   - `state`: Filter code scanning alerts by state. Defaults to open (string, optional)
   - `tool_name`: The name of the tool used for code scanning. (string, optional)
-
-- **list_org_code_scanning_alerts** - List org code scanning alerts
-  - **Required OAuth Scopes**: `security_events`
-  - **Accepted OAuth Scopes**: `repo`, `security_events`
-  - `org`: The organization name. (string, required)
-  - `page`: Page number for pagination (min 1) (number, optional)
-  - `perPage`: Results per page for pagination (min 1, max 100) (number, optional)
-  - `severity`: Filter by severity. (string, optional)
-  - `state`: Alert state. Default "open". (string, optional)
 
 </details>
 
@@ -1366,16 +1357,6 @@ The following sets of tools are available:
   - `alertNumber`: The number of the alert. (number, required)
   - `owner`: The owner of the repository. (string, required)
   - `repo`: The name of the repository. (string, required)
-
-- **list_org_secret_scanning_alerts** - List org secret scanning alerts
-  - **Required OAuth Scopes**: `security_events`
-  - **Accepted OAuth Scopes**: `repo`, `security_events`
-  - `org`: The organization name. (string, required)
-  - `page`: Page number for pagination (min 1) (number, optional)
-  - `perPage`: Results per page for pagination (min 1, max 100) (number, optional)
-  - `resolution`: Comma-separated list of resolutions. Valid: false_positive, wont_fix, revoked, pattern_edited, pattern_deleted, used_in_tests. (string, optional)
-  - `secret_type`: Comma-separated list of secret types to return. (string, optional)
-  - `state`: Alert state. (string, optional)
 
 - **list_secret_scanning_alert_locations** - List secret scanning alert locations
   - **Required OAuth Scopes**: `security_events`
