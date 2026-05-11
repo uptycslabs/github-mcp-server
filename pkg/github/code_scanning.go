@@ -97,8 +97,11 @@ func ListCodeScanningAlerts(t translations.TranslationHelperFunc) inventory.Serv
 	return NewTool(
 		ToolsetMetadataCodeSecurity,
 		mcp.Tool{
-			Name:        "list_code_scanning_alerts",
-			Description: t("TOOL_LIST_CODE_SCANNING_ALERTS_DESCRIPTION", "List code scanning alerts in a GitHub repository."),
+			Name: "list_code_scanning_alerts",
+			Description: t("TOOL_LIST_CODE_SCANNING_ALERTS_DESCRIPTION",
+				"List code scanning alerts. If `repo` is provided, returns alerts for that repository. "+
+					"If only `owner` is provided, returns the org-wide rollup across all repositories the caller can access "+
+					"(each alert includes a `repository` field for identification)."),
 			Annotations: &mcp.ToolAnnotations{
 				Title:        t("TOOL_LIST_CODE_SCANNING_ALERTS_USER_TITLE", "List code scanning alerts"),
 				ReadOnlyHint: true,
@@ -108,11 +111,11 @@ func ListCodeScanningAlerts(t translations.TranslationHelperFunc) inventory.Serv
 				Properties: map[string]*jsonschema.Schema{
 					"owner": {
 						Type:        "string",
-						Description: "The owner of the repository.",
+						Description: "The owner of the repository, or the organization name when listing org-wide alerts (no `repo`).",
 					},
 					"repo": {
 						Type:        "string",
-						Description: "The name of the repository.",
+						Description: "Optional. The name of the repository. Omit to list org-wide alerts for `owner`.",
 					},
 					"state": {
 						Type:        "string",
@@ -122,7 +125,7 @@ func ListCodeScanningAlerts(t translations.TranslationHelperFunc) inventory.Serv
 					},
 					"ref": {
 						Type:        "string",
-						Description: "The Git reference for the results you want to list.",
+						Description: "The Git reference for the results you want to list. Ignored when listing org-wide alerts.",
 					},
 					"severity": {
 						Type:        "string",
@@ -134,7 +137,7 @@ func ListCodeScanningAlerts(t translations.TranslationHelperFunc) inventory.Serv
 						Description: "The name of the tool used for code scanning.",
 					},
 				},
-				Required: []string{"owner", "repo"},
+				Required: []string{"owner"},
 			},
 		},
 		[]scopes.Scope{scopes.SecurityEvents},
@@ -143,7 +146,7 @@ func ListCodeScanningAlerts(t translations.TranslationHelperFunc) inventory.Serv
 			if err != nil {
 				return utils.NewToolResultError(err.Error()), nil, nil
 			}
-			repo, err := RequiredParam[string](args, "repo")
+			repo, err := OptionalParam[string](args, "repo")
 			if err != nil {
 				return utils.NewToolResultError(err.Error()), nil, nil
 			}
@@ -168,7 +171,17 @@ func ListCodeScanningAlerts(t translations.TranslationHelperFunc) inventory.Serv
 			if err != nil {
 				return utils.NewToolResultErrorFromErr("failed to get GitHub client", err), nil, nil
 			}
-			alerts, resp, err := client.CodeScanning.ListAlertsForRepo(ctx, owner, repo, &github.AlertListOptions{Ref: ref, State: state, Severity: severity, ToolName: toolName})
+			opts := &github.AlertListOptions{State: state, Severity: severity, ToolName: toolName}
+			var alerts []*github.Alert
+			var resp *github.Response
+			if repo == "" {
+				// Org-wide rollup: `owner` is treated as the organization name.
+				// `ref` doesn't apply at org scope; silently ignored.
+				alerts, resp, err = client.CodeScanning.ListAlertsForOrg(ctx, owner, opts)
+			} else {
+				opts.Ref = ref
+				alerts, resp, err = client.CodeScanning.ListAlertsForRepo(ctx, owner, repo, opts)
+			}
 			if err != nil {
 				return ghErrors.NewGitHubAPIErrorResponse(ctx,
 					"failed to list alerts",

@@ -137,7 +137,9 @@ func Test_ListCodeScanningAlerts(t *testing.T) {
 	assert.Contains(t, schema.Properties, "state")
 	assert.Contains(t, schema.Properties, "severity")
 	assert.Contains(t, schema.Properties, "tool_name")
-	assert.ElementsMatch(t, schema.Required, []string{"owner", "repo"})
+	// Only `owner` is required — `repo` is optional. When `repo` is absent
+	// the tool returns the org-wide rollup (treating `owner` as the org name).
+	assert.ElementsMatch(t, schema.Required, []string{"owner"})
 
 	// Setup mock alerts for success case
 	mockAlerts := []*github.Alert{
@@ -197,6 +199,44 @@ func Test_ListCodeScanningAlerts(t *testing.T) {
 			requestArgs: map[string]interface{}{
 				"owner": "owner",
 				"repo":  "repo",
+			},
+			expectError:    true,
+			expectedErrMsg: "failed to list alerts",
+		},
+		{
+			// org-level rollup: `repo` omitted, `owner` is treated as the org name
+			// and the request hits /orgs/{org}/code-scanning/alerts.
+			// `ref` is passed in args but must NOT propagate to the org endpoint —
+			// expectQueryParams asserts an exact count match (state + severity only),
+			// so any leaked `ref=` query param would fail the test.
+			name: "successful org-wide alerts listing — ref is stripped",
+			mockedClient: MockHTTPClientWithHandlers(map[string]http.HandlerFunc{
+				GetOrgsCodeScanningAlertsByOrg: expectQueryParams(t, map[string]string{
+					"state":    "open",
+					"severity": "high",
+				}).andThen(
+					mockResponse(t, http.StatusOK, mockAlerts),
+				),
+			}),
+			requestArgs: map[string]interface{}{
+				"owner":    "myorg",
+				"state":    "open",
+				"severity": "high",
+				"ref":      "refs/heads/main", // intentionally provided; should be ignored at org scope
+			},
+			expectError:    false,
+			expectedAlerts: mockAlerts,
+		},
+		{
+			name: "org-wide alerts listing fails",
+			mockedClient: MockHTTPClientWithHandlers(map[string]http.HandlerFunc{
+				GetOrgsCodeScanningAlertsByOrg: http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.WriteHeader(http.StatusForbidden)
+					_, _ = w.Write([]byte(`{"message": "Resource not accessible by integration"}`))
+				}),
+			}),
+			requestArgs: map[string]interface{}{
+				"owner": "myorg",
 			},
 			expectError:    true,
 			expectedErrMsg: "failed to list alerts",

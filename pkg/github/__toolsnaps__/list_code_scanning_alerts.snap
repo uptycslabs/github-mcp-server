@@ -3,25 +3,21 @@
     "readOnlyHint": true,
     "title": "List code scanning alerts"
   },
-  "description": "List code scanning alerts in a GitHub repository.",
+  "description": "List code scanning alerts. If `repo` is provided, returns alerts for that repository. If only `owner` is provided, returns the org-wide rollup across all repositories the caller can access (each alert includes a `repository` field for identification).",
   "inputSchema": {
     "type": "object",
-    "required": [
-      "owner",
-      "repo"
-    ],
     "properties": {
       "owner": {
         "type": "string",
-        "description": "The owner of the repository."
+        "description": "The owner of the repository, or the organization name when listing org-wide alerts (no `repo`)."
       },
       "ref": {
         "type": "string",
-        "description": "The Git reference for the results you want to list."
+        "description": "The Git reference for the results you want to list. Ignored when listing org-wide alerts."
       },
       "repo": {
         "type": "string",
-        "description": "The name of the repository."
+        "description": "Optional. The name of the repository. Omit to list org-wide alerts for `owner`."
       },
       "severity": {
         "type": "string",
@@ -51,7 +47,10 @@
         "type": "string",
         "description": "The name of the tool used for code scanning."
       }
-    }
+    },
+    "required": [
+      "owner"
+    ]
   },
   "name": "list_code_scanning_alerts"
 }

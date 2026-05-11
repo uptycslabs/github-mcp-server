@@ -187,3 +187,73 @@ func ListSecretScanningAlerts(t translations.TranslationHelperFunc) inventory.Se
 		},
 	)
 }
+
+// ListSecretScanningAlertLocations returns the file paths and commits where a leaked
+// secret was detected. Pairs with get_secret_scanning_alert (which gives the secret
+// metadata) to answer "where is this leaked secret used in the repo?".
+func ListSecretScanningAlertLocations(t translations.TranslationHelperFunc) inventory.ServerTool {
+	return NewTool(
+		ToolsetMetadataSecretProtection,
+		mcp.Tool{
+			Name:        "list_secret_scanning_alert_locations",
+			Description: t("TOOL_LIST_SECRET_SCANNING_ALERT_LOCATIONS_DESCRIPTION", "List the locations (file paths + commits) where a specific secret scanning alert was detected. Use after get_secret_scanning_alert to find every place a leaked secret appears."),
+			Annotations: &mcp.ToolAnnotations{
+				Title:        t("TOOL_LIST_SECRET_SCANNING_ALERT_LOCATIONS_USER_TITLE", "List secret scanning alert locations"),
+				ReadOnlyHint: true,
+			},
+			InputSchema: WithPagination(&jsonschema.Schema{
+				Type: "object",
+				Properties: map[string]*jsonschema.Schema{
+					"owner":       {Type: "string", Description: "The owner of the repository."},
+					"repo":        {Type: "string", Description: "The name of the repository."},
+					"alertNumber": {Type: "number", Description: "The number of the alert (from list_secret_scanning_alerts)."},
+				},
+				Required: []string{"owner", "repo", "alertNumber"},
+			}),
+		},
+		[]scopes.Scope{scopes.SecurityEvents},
+		func(ctx context.Context, deps ToolDependencies, _ *mcp.CallToolRequest, args map[string]any) (*mcp.CallToolResult, any, error) {
+			owner, err := RequiredParam[string](args, "owner")
+			if err != nil {
+				return utils.NewToolResultError(err.Error()), nil, nil
+			}
+			repo, err := RequiredParam[string](args, "repo")
+			if err != nil {
+				return utils.NewToolResultError(err.Error()), nil, nil
+			}
+			alertNumber, err := RequiredInt(args, "alertNumber")
+			if err != nil {
+				return utils.NewToolResultError(err.Error()), nil, nil
+			}
+			pagination, err := OptionalPaginationParams(args)
+			if err != nil {
+				return utils.NewToolResultError(err.Error()), nil, nil
+			}
+
+			client, err := deps.GetClient(ctx)
+			if err != nil {
+				return utils.NewToolResultErrorFromErr("failed to get GitHub client", err), nil, nil
+			}
+
+			locations, resp, err := client.SecretScanning.ListLocationsForAlert(ctx, owner, repo, int64(alertNumber), &github.ListOptions{Page: pagination.Page, PerPage: pagination.PerPage})
+			if err != nil {
+				return ghErrors.NewGitHubAPIErrorResponse(ctx, "failed to list secret scanning alert locations", resp, err), nil, nil
+			}
+			defer func() { _ = resp.Body.Close() }()
+
+			if resp.StatusCode != http.StatusOK {
+				body, err := io.ReadAll(resp.Body)
+				if err != nil {
+					return utils.NewToolResultErrorFromErr("failed to read response body", err), nil, nil
+				}
+				return ghErrors.NewGitHubAPIStatusErrorResponse(ctx, "failed to list secret scanning alert locations", resp, body), nil, nil
+			}
+
+			r, err := json.Marshal(locations)
+			if err != nil {
+				return utils.NewToolResultErrorFromErr("failed to marshal locations", err), nil, nil
+			}
+			return utils.NewToolResultText(string(r)), nil, nil
+		},
+	)
+}

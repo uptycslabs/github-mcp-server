@@ -249,3 +249,103 @@ func Test_ListSecretScanningAlerts(t *testing.T) {
 		})
 	}
 }
+
+const getReposSecretScanningAlertsByOwnerByRepoByAlertNumberLocations = "GET /repos/{owner}/{repo}/secret-scanning/alerts/{alert_number}/locations" //nolint:gosec // API endpoint pattern
+
+func Test_ListSecretScanningAlertLocations(t *testing.T) {
+	toolDef := ListSecretScanningAlertLocations(translations.NullTranslationHelper)
+	require.NoError(t, toolsnaps.Test(toolDef.Tool.Name, toolDef.Tool))
+
+	assert.Equal(t, "list_secret_scanning_alert_locations", toolDef.Tool.Name)
+	assert.NotEmpty(t, toolDef.Tool.Description)
+
+	schema, ok := toolDef.Tool.InputSchema.(*jsonschema.Schema)
+	require.True(t, ok)
+	assert.Contains(t, schema.Properties, "owner")
+	assert.Contains(t, schema.Properties, "repo")
+	assert.Contains(t, schema.Properties, "alertNumber")
+	assert.ElementsMatch(t, schema.Required, []string{"owner", "repo", "alertNumber"})
+
+	mockLocations := []*github.SecretScanningAlertLocation{
+		{
+			Type: github.Ptr("commit"),
+			Details: &github.SecretScanningAlertLocationDetails{
+				Path:      github.Ptr("src/config.js"),
+				Startline: github.Ptr(42),
+				EndLine:   github.Ptr(42),
+				BlobSHA:   github.Ptr("abc123def"),
+			},
+		},
+	}
+
+	tests := []struct {
+		name           string
+		mockedClient   *http.Client
+		requestArgs    map[string]any
+		expectError    bool
+		expectedErrMsg string
+		expectedCount  int
+	}{
+		{
+			name: "successful locations fetch",
+			mockedClient: MockHTTPClientWithHandlers(map[string]http.HandlerFunc{
+				getReposSecretScanningAlertsByOwnerByRepoByAlertNumberLocations: mockResponse(t, http.StatusOK, mockLocations),
+			}),
+			requestArgs: map[string]any{
+				"owner":       "owner",
+				"repo":        "repo",
+				"alertNumber": float64(7),
+			},
+			expectedCount: 1,
+		},
+		{
+			name: "alert not found",
+			mockedClient: MockHTTPClientWithHandlers(map[string]http.HandlerFunc{
+				getReposSecretScanningAlertsByOwnerByRepoByAlertNumberLocations: func(w http.ResponseWriter, _ *http.Request) {
+					w.WriteHeader(http.StatusNotFound)
+					_, _ = w.Write([]byte(`{"message": "Not Found"}`))
+				},
+			}),
+			requestArgs: map[string]any{
+				"owner":       "owner",
+				"repo":        "repo",
+				"alertNumber": float64(9999),
+			},
+			expectError:    true,
+			expectedErrMsg: "failed to list secret scanning alert locations",
+		},
+		{
+			name:           "missing alert number",
+			mockedClient:   MockHTTPClientWithHandlers(map[string]http.HandlerFunc{}),
+			requestArgs:    map[string]any{"owner": "owner", "repo": "repo"},
+			expectError:    true,
+			expectedErrMsg: "alertNumber",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			client := github.NewClient(tc.mockedClient)
+			deps := BaseDeps{Client: client}
+			handler := toolDef.Handler(deps)
+			request := createMCPRequest(tc.requestArgs)
+
+			result, err := handler(ContextWithDeps(context.Background(), deps), &request)
+			if tc.expectError {
+				require.NoError(t, err)
+				require.True(t, result.IsError)
+				errorContent := getErrorResult(t, result)
+				assert.Contains(t, errorContent.Text, tc.expectedErrMsg)
+				return
+			}
+
+			require.NoError(t, err)
+			require.False(t, result.IsError)
+			textContent := getTextResult(t, result)
+
+			var locations []*github.SecretScanningAlertLocation
+			require.NoError(t, json.Unmarshal([]byte(textContent.Text), &locations))
+			assert.Len(t, locations, tc.expectedCount)
+		})
+	}
+}

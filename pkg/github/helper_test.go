@@ -98,6 +98,7 @@ const (
 	// Code scanning endpoints
 	GetReposCodeScanningAlertsByOwnerByRepo              = "GET /repos/{owner}/{repo}/code-scanning/alerts"
 	GetReposCodeScanningAlertsByOwnerByRepoByAlertNumber = "GET /repos/{owner}/{repo}/code-scanning/alerts/{alert_number}"
+	GetOrgsCodeScanningAlertsByOrg                       = "GET /orgs/{org}/code-scanning/alerts"
 
 	// Secret scanning endpoints
 	GetReposSecretScanningAlertsByOwnerByRepo              = "GET /repos/{owner}/{repo}/secret-scanning/alerts"                //nolint:gosec // False positive - this is an API endpoint pattern, not a credential

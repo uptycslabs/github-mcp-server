@@ -1,0 +1,25 @@
+{
+  "annotations": {
+    "readOnlyHint": true,
+    "title": "Get repository security settings"
+  },
+  "description": "Get a repository's security configuration: visibility, security_and_analysis (advanced security, secret scanning, push protection, dependabot), and whether private vulnerability reporting is enabled.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "owner": {
+        "type": "string",
+        "description": "The owner of the repository."
+      },
+      "repo": {
+        "type": "string",
+        "description": "The name of the repository."
+      }
+    },
+    "required": [
+      "owner",
+      "repo"
+    ]
+  },
+  "name": "get_repo_security_settings"
+}
